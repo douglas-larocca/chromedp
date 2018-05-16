@@ -234,9 +234,10 @@ func (c *CDP) SetHandler(i int) error {
 func (c *CDP) SetHandlerByID(id string) error {
 	c.Lock()
 	defer c.Unlock()
-
+	
 	if i, ok := c.handlerMap[id]; ok {
 		c.cur = c.handlers[i]
+		return nil
 	}
 
 	return fmt.Errorf("no handler associated with target id %s", id)

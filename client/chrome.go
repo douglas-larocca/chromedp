@@ -33,6 +33,11 @@ func (c *Chrome) GetType() TargetType {
 	return c.Type
 }
 
+// GetType returns the target type.
+func (c *Chrome) GetURL() string {
+	return c.URL
+}
+
 // GetWebsocketURL provides the websocket URL for the target, satisfying the
 // domains.Target interface.
 func (c *Chrome) GetWebsocketURL() string {

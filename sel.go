@@ -24,19 +24,21 @@ tagname
 
 // Selector holds information pertaining to an element query select action.
 type Selector struct {
-	sel   interface{}
-	exp   int
-	by    func(context.Context, *TargetHandler, *cdp.Node) ([]cdp.NodeID, error)
-	wait  func(context.Context, *TargetHandler, *cdp.Node, ...cdp.NodeID) ([]*cdp.Node, error)
-	after func(context.Context, *TargetHandler, ...*cdp.Node) error
+	sel     interface{}
+	exp     int
+	timeout time.Duration
+	by      func(context.Context, *TargetHandler, *cdp.Node) ([]cdp.NodeID, error)
+	wait    func(context.Context, *TargetHandler, *cdp.Node, ...cdp.NodeID) ([]*cdp.Node, error)
+	after   func(context.Context, *TargetHandler, ...*cdp.Node) error
 }
 
 // Query is an action to query for document nodes match the specified sel and
 // the supplied query options.
 func Query(sel interface{}, opts ...QueryOption) Action {
 	s := &Selector{
-		sel: sel,
-		exp: 1,
+		sel:     sel,
+		exp:     1,
+		timeout: 100 * time.Second,
 	}
 
 	// apply options
@@ -63,7 +65,7 @@ func (s *Selector) Do(ctxt context.Context, h cdp.Executor) error {
 	}
 
 	// TODO: fix this
-	ctxt, cancel := context.WithTimeout(ctxt, 100*time.Second)
+	ctxt, cancel := context.WithTimeout(ctxt, s.timeout)
 	defer cancel()
 
 	var err error
@@ -398,6 +400,13 @@ func NodeNotPresent(s *Selector) {
 func AtLeast(n int) QueryOption {
 	return func(s *Selector) {
 		s.exp = n
+	}
+}
+
+
+func WithTimeout(timeout time.Duration) QueryOption {
+	return func(s *Selector) {
+		s.timeout = timeout
 	}
 }
 
