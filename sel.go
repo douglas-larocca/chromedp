@@ -38,7 +38,7 @@ func Query(sel interface{}, opts ...QueryOption) Action {
 	s := &Selector{
 		sel:     sel,
 		exp:     1,
-		timeout: 100 * time.Second,
+		timeout: 10 * time.Second,
 	}
 
 	// apply options

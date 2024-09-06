@@ -154,6 +154,24 @@ func (c *Client) ListPageTargets(ctxt context.Context) ([]Target, error) {
 	return c.ListTargetsWithType(ctxt, Page)
 }
 
+func (c *Client) ListPageTargetsWithURL(ctxt context.Context, urlstr string) ([]Target, error) {
+	var err error
+
+	targets, err := c.ListTargets(ctxt)
+	if err != nil {
+		return nil, err
+	}
+
+	var ret []Target
+	for _, t := range targets {
+		if t.GetType() == Page && strings.HasPrefix(t.GetURL(), urlstr) {
+			ret = append(ret, t)
+		}
+	}
+
+	return ret, nil
+}
+
 var browserRE = regexp.MustCompile(`(?i)^(chrome|chromium|microsoft edge|safari)`)
 
 // loadProtocolInfo loads the protocol information from the remote URL.
@@ -268,6 +286,54 @@ func (c *Client) WatchPageTargets(ctxt context.Context) <-chan Target {
 		encountered := make(map[string]bool)
 		check := func() error {
 			targets, err := c.ListPageTargets(ctxt)
+			if err != nil {
+				return err
+			}
+
+			for _, t := range targets {
+				if !encountered[t.GetID()] {
+					ch <- t
+				}
+				encountered[t.GetID()] = true
+			}
+			return nil
+		}
+
+		var err error
+		lastGood := time.Now()
+		for {
+			err = check()
+			if err == nil {
+				lastGood = time.Now()
+			} else if time.Now().After(lastGood.Add(c.timeout)) {
+				return
+			}
+
+			select {
+			case <-time.After(c.check):
+				continue
+
+			case <-ctxt.Done():
+				return
+			}
+		}
+	}()
+
+	return ch
+}
+
+func (c *Client) WatchPageTargetsWithURL(ctxt context.Context, urlstr string) <-chan Target {
+	if ctxt == nil {
+		ctxt = context.Background()
+	}
+
+	ch := make(chan Target)
+	go func() {
+		defer close(ch)
+
+		encountered := make(map[string]bool)
+		check := func() error {
+			targets, err := c.ListPageTargetsWithURL(ctxt, urlstr)
 			if err != nil {
 				return err
 			}
