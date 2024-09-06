@@ -129,5 +129,3 @@ Please see the [examples][6] project for more examples. Please refer to the
 [9]: https://godoc.org/github.com/chromedp/cdproto
 [10]: https://github.com/chromedp/cdproto-gen
 [11]: https://github.com/chromedp/chromedp-proxy
-
-
